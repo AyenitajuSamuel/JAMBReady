@@ -1,0 +1,55 @@
+name: Bug Report
+description: Report a bug to help us improve the project
+title: "[Bug]: "
+labels: ["bug"]
+
+body:
+
+* type: markdown
+  attributes:
+  value: |
+  Thanks for taking the time to report a bug.
+
+* type: textarea
+  id: description
+  attributes:
+  label: Bug Description
+  description: Describe the issue clearly.
+  placeholder: What happened?
+  validations:
+  required: true
+
+* type: textarea
+  id: reproduction
+  attributes:
+  label: Steps to Reproduce
+  description: Provide steps to reproduce the issue.
+  placeholder: |
+  1. Go to '...'
+  2. Run '...'
+  3. See error
+  validations:
+  required: true
+
+* type: textarea
+  id: expected
+  attributes:
+  label: Expected Behavior
+  description: What did you expect to happen?
+
+* type: textarea
+  id: logs
+  attributes:
+  label: Error Logs / Traceback
+  description: Paste any relevant error messages or stack traces.
+
+* type: textarea
+  id: environment
+  attributes:
+  label: Environment
+  description: Provide information about your environment.
+  placeholder: |
+  OS:
+  Python version:
+  Django version:
+  Browser (if applicable):
