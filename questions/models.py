@@ -22,15 +22,6 @@ class Question(models.Model):
     question_text = models.TextField()
     year = models.IntegerField()
 
-    difficulty = models.CharField(
-        max_length=20,
-        choices=[
-            ("easy", "Easy"),
-            ("medium", "Medium"),
-            ("hard", "Hard")
-        ]
-    )
-
     def __str__(self):
         return self.question_text
 
