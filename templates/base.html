@@ -8,9 +8,13 @@
 <body>
 
   <nav>
-    <a href="/">ExamReady</a>
+    <a href="{% url 'home' %}">ExamReady</a>
     |
     {% if user.is_authenticated %}
+      <a href="{% url 'exam_lobby' %}">Exams</a>
+      |
+      <a href="{% url 'exam_history' %}">History</a>
+      |
       <a href="{% url 'profile' %}">{{ user.username }}</a>
       |
       <form method="post" action="{% url 'logout' %}" style="display:inline;">
