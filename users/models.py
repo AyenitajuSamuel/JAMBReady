@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -28,9 +29,19 @@ class Profile(models.Model):
         on_delete=models.CASCADE,
         related_name="profile"
     )
-    bio = models.TextField(blank=True)
-    avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    bio      = models.TextField(blank=True)
+    avatar   = models.ImageField(upload_to="avatars/", blank=True, null=True)
+    subjects = models.ManyToManyField(
+        "questions.Subject",
+        blank=True,
+        related_name="profiles",
+        help_text="Select up to 4 JAMB subjects"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Profile of {self.user.username}"
+
+    @property
+    def subjects_complete(self):
+        return self.subjects.count() == 4
