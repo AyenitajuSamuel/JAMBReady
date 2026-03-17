@@ -1,18 +1,43 @@
 {% extends "base.html" %}
-
 {% block title %}My Profile{% endblock %}
 
 {% block content %}
-<h2>{{ request.user.username }}'s Profile</h2>
-{% if profile.avatar %}
-  <img src="{{ profile.avatar.url }}" alt="Avatar" width="100">
-{% endif %}
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Save Changes</button>
-</form>
-<form method="post" action="{% url 'logout' %}">
+<h1>{{ request.user.username }}'s Profile</h1>
+
+<section>
+  <h2>My JAMB Subjects</h2>
+  {% if profile.subjects.count > 0 %}
+    <ul>
+      {% for subject in profile.subjects.all %}
+        <li>{{ subject.name }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>You haven't selected your subjects yet.</p>
+  {% endif %}
+  <a href="{% url 'select_subjects' %}">
+    {% if profile.subjects.count > 0 %}Change subjects{% else %}Select subjects{% endif %}
+  </a>
+</section>
+
+<hr>
+
+<section>
+  <h2>Edit Profile</h2>
+  {% if profile.avatar %}
+    <img src="{{ profile.avatar.url }}" alt="Avatar" width="100"><br><br>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Changes</button>
+  </form>
+</section>
+
+<hr>
+
+<form method="post" action="/users/logout/">
   {% csrf_token %}
   <button type="submit">Log Out</button>
 </form>
