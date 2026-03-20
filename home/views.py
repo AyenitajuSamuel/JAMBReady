@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from questions.models import Subject
 from exam.models import ExamSession
+from recommendations.engine import get_recommendations
 
 
 def home(request):
@@ -19,6 +20,7 @@ def home(request):
             "total_exams":     total_exams,
             "total_passed":    total_passed,
             "subjects":        Subject.objects.all(),
+            "top_recs":        get_recommendations(request.user)[:3],
         })
 
     return render(request, "home/home.html", context)

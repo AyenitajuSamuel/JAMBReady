@@ -7,6 +7,109 @@
 
   <h1>Welcome back, {{ user.username }}!</h1>
 
+  <!-- Recommendations -->
+  {% if top_recs %}
+  <section>
+    <h2>Recommended for you</h2>
+    <style>
+      .rec-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+      .rec-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 1.1rem 1.1rem 0.9rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        background: #fff;
+        border-left: 4px solid #aaa;
+      }
+      .rec-card.kind-danger  { border-left-color: #d9534f; }
+      .rec-card.kind-warning { border-left-color: #f0ad4e; }
+      .rec-card.kind-success { border-left-color: #5cb85c; }
+      .rec-card.kind-info    { border-left-color: #5bc0de; }
+      .rec-card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      .rec-icon {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+      }
+      .kind-danger  .rec-icon { background: #fdf0ef; }
+      .kind-warning .rec-icon { background: #fef9ec; }
+      .kind-success .rec-icon { background: #edfaed; }
+      .kind-info    .rec-icon { background: #eff8fb; }
+      .rec-title {
+        font-weight: 600;
+        font-size: 0.92rem;
+        margin: 0;
+        line-height: 1.3;
+      }
+      .rec-body {
+        font-size: 0.85rem;
+        color: #555;
+        margin: 0;
+        line-height: 1.5;
+      }
+      .rec-cta {
+        display: inline-block;
+        margin-top: 0.2rem;
+        padding: 0.35rem 0.8rem;
+        border-radius: 5px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        text-decoration: none;
+        color: #fff;
+        align-self: flex-start;
+      }
+      .kind-danger  .rec-cta { background: #d9534f; }
+      .kind-warning .rec-cta { background: #e09b3a; }
+      .kind-success .rec-cta { background: #4cae4c; }
+      .kind-info    .rec-cta { background: #31b0d5; }
+      .rec-cta:hover { opacity: 0.88; }
+    </style>
+
+    <div class="rec-grid">
+      {% for rec in top_recs %}
+        <div class="rec-card kind-{{ rec.kind }}">
+          <div class="rec-card-header">
+            <div class="rec-icon">
+              {% if rec.icon == "alert" %}⚠
+              {% elif rec.icon == "play" %}▶
+              {% elif rec.icon == "target" %}🎯
+              {% elif rec.icon == "book" %}📖
+              {% elif rec.icon == "repeat" %}↻
+              {% elif rec.icon == "clock" %}⏱
+              {% elif rec.icon == "calendar" %}📅
+              {% elif rec.icon == "star" %}★
+              {% elif rec.icon == "chart" %}📊
+              {% else %}💡
+              {% endif %}
+            </div>
+            <h2 class="rec-title">{{ rec.title }}</h2>
+          </div>
+          <p class="rec-body">{{ rec.body }}</p>
+          <a class="rec-cta" href="{{ rec.cta_url }}">{{ rec.cta_label }} →</a>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <hr>
+  {% endif %}
+
   <!-- Quick Stats -->
   <section>
     <h2>Your Stats</h2>
@@ -59,13 +162,12 @@
           {% endfor %}
         </tbody>
       </table>
-      <p><a href="/exam/history/">View all results &rarr;</a></p>
+      <p><a href="/exam/history/">View all results →</a></p>
     </section>
   {% else %}
-    <p>You haven't completed any exams yet. <a href="/exam/">Start one now &rarr;</a></p>
+    <p>You haven't completed any exams yet. <a href="/exam/">Start one now →</a></p>
   {% endif %}
 
-  <!-- Available Subjects -->
   {% if subjects %}
     <hr>
     <section>
@@ -83,15 +185,12 @@
   <!-- Guest landing -->
   <h1>Welcome to ExamReady</h1>
   <p>Prepare smarter for your exams with past questions, timed practice, and personalised drills.</p>
-
   <p>
     <a href="/users/register/">Create an account</a>
     &nbsp;|&nbsp;
     <a href="/users/login/">Log in</a>
   </p>
-
   <hr>
-
   <h2>What you can do</h2>
   <ul>
     <li><strong>Quick Test</strong> — 15 random questions to warm up</li>
