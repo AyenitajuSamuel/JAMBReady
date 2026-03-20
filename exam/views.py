@@ -10,7 +10,7 @@ from questions.models import Choice, Question, Subject, Topic
 from .models import ExamQuestion, ExamSession
 
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
+# Helpers
 
 def _build_session(user, exam_type, questions_qs, subject=None, topic=None,
                    duration_seconds=None, pass_mark=50):
@@ -40,38 +40,65 @@ def _reveal_immediately(exam_type):
                          ExamSession.ExamType.WEAKNESS_DRILL)
 
 
-# ── Lobby ─────────────────────────────────────────────────────────────────────
+def _get_profile_subjects(user):
+    """Return the queryset of subjects the user has selected, or None if incomplete."""
+    try:
+        profile = user.profile
+    except Exception:
+        return None
+    subjects = profile.subjects.all()
+    return subjects if subjects.count() == 4 else None
+
+
+# Lobby
 
 @login_required
 def lobby(request):
-    subjects = Subject.objects.prefetch_related("topics").all()
+    profile_subjects = _get_profile_subjects(request.user)
+
+    # Only show the subjects the user has selected (or all if somehow incomplete)
+    subjects = profile_subjects if profile_subjects is not None else Subject.objects.none()
+
     subjects_json = [
         {
             "id": s.id,
             "name": s.name,
             "topics": [{"id": t.id, "name": t.name} for t in s.topics.all()]
         }
-        for s in subjects
+        for s in subjects.prefetch_related("topics")
     ]
     return render(request, "exam/lobby.html", {
         "subjects": subjects,
         "subjects_json": subjects_json,
+        "subjects_incomplete": profile_subjects is None,
     })
 
 
-# ── Start Exam ────────────────────────────────────────────────────────────────
+# Start Exam
 
 @login_required
 @require_POST
 def start_exam(request):
-    exam_type = request.POST.get("exam_type")
+    # Guard: user must have selected exactly 4 subjects
+    profile_subjects = _get_profile_subjects(request.user)
+    if profile_subjects is None:
+        return redirect("select_subjects")
+
+    exam_type  = request.POST.get("exam_type") or ExamSession.ExamType.QUICK_TEST
     subject_id = request.POST.get("subject_id")
     topic_id   = request.POST.get("topic_id")
 
-    subject = get_object_or_404(Subject, pk=subject_id) if subject_id else None
-    topic   = get_object_or_404(Topic,   pk=topic_id)   if topic_id   else None
+    subject = (
+        profile_subjects.filter(pk=subject_id).first()
+        if subject_id else None
+    )
+    topic = Topic.objects.filter(pk=topic_id).first() if topic_id else None
 
-    base_qs = Question.objects.prefetch_related("choices")
+    base_qs = (
+        Question.objects
+        .filter(subject__in=profile_subjects)
+        .prefetch_related("choices")
+    )
     if subject:
         base_qs = base_qs.filter(subject=subject)
     if topic:
@@ -104,7 +131,12 @@ def start_exam(request):
     elif exam_type == ExamSession.ExamType.WEAKNESS_DRILL:
         wrong_ids = (
             ExamQuestion.objects
-            .filter(session__user=request.user, is_correct=False)
+            .filter(
+                session__user=request.user,
+                is_correct=False,
+                # Only drill questions within the user's chosen subjects
+                question__subject__in=profile_subjects,
+            )
             .values_list("question_id", flat=True)
             .distinct()
         )
@@ -119,7 +151,7 @@ def start_exam(request):
     return redirect("exam_question", session_id=session.id)
 
 
-# ── Question View ─────────────────────────────────────────────────────────────
+#Question View
 
 @login_required
 def exam_question(request, session_id):
@@ -128,7 +160,6 @@ def exam_question(request, session_id):
         status=ExamSession.Status.IN_PROGRESS
     )
 
-    # Next unanswered question
     exam_q = session.examquestion_set.filter(answered=False).first()
     if not exam_q:
         return redirect("exam_complete", session_id=session.id)
@@ -149,7 +180,7 @@ def exam_question(request, session_id):
     })
 
 
-# ── Submit Answer ─────────────────────────────────────────────────────────────
+#Submit Answer
 
 @login_required
 @require_POST
@@ -189,7 +220,7 @@ def submit_answer(request, session_id):
     return redirect("exam_question", session_id=session.id)
 
 
-# ── Abandon ───────────────────────────────────────────────────────────────────
+# Abandon
 
 @login_required
 @require_POST
@@ -199,9 +230,6 @@ def abandon_exam(request, session_id):
     session.completed_at = timezone.now()
     session.save()
     return redirect("exam_lobby")
-
-
-# ── Complete ──────────────────────────────────────────────────────────────────
 
 @login_required
 def exam_complete(request, session_id):
@@ -224,7 +252,7 @@ def exam_complete(request, session_id):
     })
 
 
-# ── History ───────────────────────────────────────────────────────────────────
+# History
 
 @login_required
 def exam_history(request):

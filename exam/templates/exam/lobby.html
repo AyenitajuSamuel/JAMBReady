@@ -3,6 +3,14 @@
 
 {% block content %}
 <h1>Start an Exam</h1>
+
+{% if subjects_incomplete %}
+  <p style="color: red;">
+    <strong>You haven't selected your 4 JAMB subjects yet.</strong>
+    Please <a href="{% url 'select_subjects' %}">select your subjects</a> before starting an exam.
+  </p>
+{% else %}
+
 <p>Choose an exam type below to begin.</p>
 
 <form method="post" action="{% url 'start_exam' %}">
@@ -13,7 +21,7 @@
     <legend><strong>Exam Type</strong></legend>
 
     <label>
-      <input type="radio" name="exam_type" value="quick_test" required>
+      <input type="radio" name="exam_type" value="quick_test" checked>
       <strong>Quick Test</strong> — 15 random questions, no time limit
     </label><br>
 
@@ -35,11 +43,11 @@
 
   <br>
 
-  <!-- Subject (optional for quick test / weakness drill) -->
+  <!-- Subject — only the user's 4 selected subjects are shown -->
   <fieldset id="subject-section">
     <legend><strong>Subject</strong> <small>(optional for Quick Test &amp; Weakness Drill)</small></legend>
     <select name="subject_id">
-      <option value="">— All subjects —</option>
+      <option value="">— All my subjects —</option>
       {% for subject in subjects %}
         <option value="{{ subject.id }}">{{ subject.name }}</option>
       {% endfor %}
@@ -59,6 +67,8 @@
   <br>
   <button type="submit">Start Exam &rarr;</button>
 </form>
+
+{% endif %}
 
 <hr>
 <a href="{% url 'exam_history' %}">View my past results</a>
