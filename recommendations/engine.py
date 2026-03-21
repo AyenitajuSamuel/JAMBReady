@@ -1,5 +1,5 @@
 """
-Recommendation engine for ExamReady.
+Recommendation engine for JAMBReady.
 
 Analyses a user's exam history and profile to produce a ranked list of
 actionable recommendations. No database models required — everything is

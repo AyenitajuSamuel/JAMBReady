@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Recommendations — JAMBReady{% endblock %}
+{% block tab_home %}{% endblock %}
+{% block sidebar_recs %}er-sidebar__item--active{% endblock %}
+
+{% block content %}
+<div class="er-page">
+
+  <div class="home-greeting">
+    <h1>Recommendations</h1>
+    <p class="home-greeting__sub">Personalised actions to improve your JAMB readiness.</p>
+  </div>
+
+  {% if recommendations %}
+
+    <!-- First rec as the prominent insights card, same as home page -->
+    {% with recommendations.0 as first_rec %}
+    <div class="er-card insights-card" style="margin-bottom:16px;">
+      <div class="insights-card__header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/></svg>
+        Top priority
+      </div>
+      <p class="insights-card__body">{{ first_rec.body }}</p>
+      <a href="{{ first_rec.cta_url }}" class="insights-card__action">
+        {{ first_rec.cta_label }}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+    {% endwith %}
+
+    <!-- Remaining recs as the same rec-item rows used on the home page -->
+    {% if recommendations|length > 1 %}
+    <p class="er-section-title">All suggestions</p>
+    <div class="rec-list">
+      {% for rec in recommendations %}
+        {% if not forloop.first %}
+        <a href="{{ rec.cta_url }}" class="rec-item rec-item--{{ rec.kind }}">
+          <div class="rec-item__icon rec-item__icon--{{ rec.kind }}">
+            {% if rec.icon == "alert" %}⚠️
+            {% elif rec.icon == "play" %}▶️
+            {% elif rec.icon == "target" %}🎯
+            {% elif rec.icon == "book" %}📖
+            {% elif rec.icon == "repeat" %}🔁
+            {% elif rec.icon == "clock" %}⏱️
+            {% elif rec.icon == "calendar" %}📅
+            {% elif rec.icon == "star" %}⭐
+            {% elif rec.icon == "chart" %}📊
+            {% else %}💡
+            {% endif %}
+          </div>
+          <div class="rec-item__content">
+            <div class="rec-item__title">{{ rec.title }}</div>
+            <div class="rec-item__body">{{ rec.body }}</div>
+          </div>
+          <span class="rec-item__cta">{{ rec.cta_label }} →</span>
+        </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  {% else %}
+
+    <div class="history-empty">
+      <div class="history-empty__icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/></svg>
+      </div>
+      <p class="history-empty__title">No recommendations yet</p>
+      <p class="history-empty__sub">Complete a few exams and we'll suggest what to work on.</p>
+      <a href="{% url 'exam_lobby' %}" class="er-btn-primary" style="margin-top:16px;">Start an exam</a>
+    </div>
+
+  {% endif %}
+
+</div>
+{% endblock %}

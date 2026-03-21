@@ -1,44 +1,103 @@
 {% extends "base.html" %}
-{% block title %}Answer{% endblock %}
+{% load static %}
+{% block title %}Answer — JAMBReady{% endblock %}
+{% block tab_exams %}er-tabbar__item--active{% endblock %}
+{% block sidebar_exams %}er-sidebar__item--active{% endblock %}
+
+{% block topbar %}
+<header class="exam-topbar">
+  <div class="exam-topbar__row1">
+    <div class="exam-topbar__brand">
+      <span class="exam-topbar__brand-name">JAMBReady</span>
+      <span class="exam-topbar__brand-sub">{{ session.get_exam_type_display }}</span>
+    </div>
+    <div style="font-family:var(--font-display);font-size:.85rem;font-weight:600;color:var(--green-500);">
+      Answer Revealed
+    </div>
+    <div style="width:80px;"></div>
+  </div>
+  <div class="exam-topbar__row2">
+    <div class="exam-progress-bar">
+      <div class="exam-progress-bar__fill" style="--pct: 100%;"></div>
+    </div>
+  </div>
+</header>
+{% endblock %}
+
+{% block tabbar %}{% endblock %}
 
 {% block content %}
+<div class="er-page" style="padding-bottom:90px;">
 
-<p><strong>{{ session.get_exam_type_display }}</strong></p>
+  <!-- Question text -->
+  <div class="er-card question-card">
+    <div class="question-card__meta">
+      <span class="question-card__num">Your answer</span>
+    </div>
+    <p class="question-card__text">{{ question.question_text }}</p>
+  </div>
 
-<h2>{{ question.question_text }}</h2>
+  <!-- Result banner -->
+  {% if is_correct %}
+  <div class="reveal-banner reveal-banner--correct">
+    <div class="reveal-banner__icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div>
+      <p class="reveal-banner__title">Correct!</p>
+      <p class="reveal-banner__sub">Well done, keep it up.</p>
+    </div>
+  </div>
+  {% else %}
+  <div class="reveal-banner reveal-banner--wrong">
+    <div class="reveal-banner__icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </div>
+    <div>
+      <p class="reveal-banner__title">Incorrect</p>
+      <p class="reveal-banner__sub">Your answer: <strong>{{ selected.option_text }}</strong></p>
+    </div>
+  </div>
+  {% endif %}
 
-{% if is_correct %}
-  <p><strong>✓ Correct!</strong></p>
-{% else %}
-  <p><strong>✗ Incorrect.</strong></p>
-  <p>Your answer: {{ selected.option_text }}</p>
-  <p>Correct answer: {{ correct_choice.option_text }}</p>
-{% endif %}
-
-<!-- All choices with correct highlighted -->
-<ul>
-  {% for choice in question.choices.all %}
-    <li>
+  <!-- All choices -->
+  <div class="choices-list">
+    {% for choice in question.choices.all %}
+    <div class="choice-item
+      {% if choice.is_correct %}choice-item--correct
+      {% elif choice == selected and not is_correct %}choice-item--wrong
+      {% endif %}">
+      <div class="choice-letter">
+        {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}E{% endif %}
+      </div>
+      <span class="choice-text">{{ choice.option_text }}</span>
       {% if choice.is_correct %}
-        <strong>[CORRECT] {{ choice.option_text }}</strong>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-500)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-left:auto;"><polyline points="20 6 9 17 4 12"/></svg>
       {% elif choice == selected and not is_correct %}
-        <s>{{ choice.option_text }}</s> &larr; your answer
-      {% else %}
-        {{ choice.option_text }}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red-500)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-left:auto;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       {% endif %}
-    </li>
-  {% endfor %}
-</ul>
+    </div>
+    {% endfor %}
+  </div>
 
-{% if explanation %}
-  <hr>
-  <h3>Explanation</h3>
-  <p>{{ explanation }}</p>
-{% endif %}
+  <!-- Explanation -->
+  {% if explanation %}
+  <div class="er-card" style="margin-top:16px;border-left:3px solid var(--green-500);border-radius:0 var(--radius-md) var(--radius-md) 0;">
+    <p class="lobby-sub-label" style="margin-bottom:6px;">Explanation</p>
+    <p style="font-size:.88rem;line-height:1.6;color:var(--gray-700);">{{ explanation }}</p>
+  </div>
+  {% endif %}
 
-<hr>
-<a href="{% url 'exam_question' session.id %}">
-  Next Question &rarr;
-</a>
+</div>
 
+<!-- Bottom bar -->
+<div class="exam-bottombar">
+  <div style="font-size:.82rem;color:var(--gray-500);">
+    {% if is_correct %}🎯 Correct{% else %}📖 Keep learning{% endif %}
+  </div>
+  <a href="{% url 'exam_question' session.id %}" class="exam-btn-next">
+    Next Question
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+</div>
 {% endblock %}

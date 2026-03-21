@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Profile — ExamReady{% endblock %}
+{% block title %}Profile — JAMBReady{% endblock %}
 {% block tab_profile %}er-tabbar__item--active{% endblock %}
 
 {% block content %}
 <div class="er-page">
 
-  <!-- Avatar + name -->
+  <!-- Avatar + name + bio-->
   <div class="profile-hero">
     <div class="profile-avatar">
       {% if profile.avatar %}
@@ -44,10 +44,6 @@
   <div class="er-card" style="margin-bottom:16px;">
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
-      <div class="profile-field">
-        <label class="profile-field__label">Bio</label>
-        {{ form.bio }}
-      </div>
       <div class="profile-field">
         <label class="profile-field__label">Avatar</label>
         {{ form.avatar }}

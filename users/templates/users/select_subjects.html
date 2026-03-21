@@ -1,33 +1,60 @@
 {% extends "base.html" %}
-{% block title %}Select Your Subjects{% endblock %}
+{% load static %}
+{% block title %}Select Subjects — JAMBReady{% endblock %}
+{% block tab_profile %}er-tabbar__item--active{% endblock %}
+{% block sidebar_profile %}er-sidebar__item--active{% endblock %}
 
 {% block content %}
-<h1>Select Your JAMB Subjects</h1>
-<p>Choose exactly <strong>4 subjects</strong> you will be sitting for JAMB.</p>
+<div class="er-page">
 
-{% if profile.subjects.count > 0 %}
-  <p>Your current subjects:
-    {% for subject in profile.subjects.all %}
-      <strong>{{ subject.name }}</strong>{% if not forloop.last %}, {% endif %}
-    {% endfor %}
-  </p>
-{% endif %}
+  <div class="home-greeting">
+    <h1>Your JAMB Subjects</h1>
+    <p class="home-greeting__sub">Choose exactly <strong>4 subjects</strong> you'll be sitting for JAMB.</p>
+  </div>
 
-<form method="post">
-  {% csrf_token %}
-
-  {% if form.errors %}
-    <p style="color:red;">{{ form.subjects.errors }}</p>
+  {% if profile.subjects.count > 0 %}
+  <div class="er-card" style="margin-bottom:16px;">
+    <p class="lobby-sub-label" style="margin-bottom:10px;">Current subjects</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      {% for subject in profile.subjects.all %}
+        <span class="subject-chip">{{ subject.name }}</span>
+      {% endfor %}
+    </div>
+  </div>
   {% endif %}
 
-  <ul style="list-style:none; padding:0;">
-    {% for checkbox in form.subjects %}
-      <li>{{ checkbox }}</li>
-    {% endfor %}
-  </ul>
+  <form method="post">
+    {% csrf_token %}
 
-  <br>
-  <button type="submit">Save Subjects</button>
-  <a href="{% url 'home' %}">Skip for now</a>
-</form>
+    {% if form.subjects.errors %}
+    <div class="er-message er-message--error" style="margin-bottom:16px;">
+      {{ form.subjects.errors.0 }}
+    </div>
+    {% endif %}
+
+    <p class="er-section-title" style="margin-bottom:12px;">Available subjects</p>
+
+    <div class="subject-select-grid">
+      {% for checkbox in form.subjects %}
+      <label class="subject-select-item" id="subj-label-{{ forloop.counter }}">
+        {{ checkbox.tag }}
+        <span class="subject-select-item__name">{{ checkbox.choice_label }}</span>
+        <div class="subject-select-item__check">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </label>
+      {% endfor %}
+    </div>
+
+    <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px;">
+      <button type="submit" class="er-btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Save Subjects
+      </button>
+      <a href="{% url 'home' %}" class="er-btn-secondary">Skip for now</a>
+    </div>
+
+  </form>
+
+</div>
 {% endblock %}

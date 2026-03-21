@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Home — ExamReady{% endblock %}
+{% block title %}Home — JAMBReady{% endblock %}
 {% block tab_home %}er-tabbar__item--active{% endblock %}
 
 {% block content %}
@@ -10,7 +10,7 @@
 
   <!-- Greeting -->
   <div class="home-greeting">
-    <h1>Hello, {{ user.username }}! 👋</h1>
+    <h1>Hello, {{ user.username }}! </h1>
     <p class="home-greeting__sub">Ready to crush your exams today?</p>
   </div>
 
@@ -126,13 +126,13 @@
     </a>
     {% endfor %}
   </div>
-  <a href="{% url 'exam_history' %}" style="display:block;text-align:center;font-size:.85rem;font-weight:600;color:var(--blue-500);margin-bottom:16px;">
+  <a href="{% url 'exam_history' %}" style="display:block;text-align:center;font-size:.85rem;font-weight:600;color:var(--green-500);margin-bottom:16px;">
     View all results →
   </a>
   {% else %}
   <div style="text-align:center;padding:32px 0;color:var(--gray-500);font-size:.88rem;">
     No exams yet.
-    <a href="{% url 'exam_lobby' %}" style="color:var(--blue-500);font-weight:600;"> Start one now →</a>
+    <a href="{% url 'exam_lobby' %}" style="color:var(--green-500);font-weight:600;"> Start one now →</a>
   </div>
   {% endif %}
 
@@ -142,7 +142,7 @@
 <!-- Guest landing -->
 <div class="er-page">
   <div class="home-greeting" style="padding-top:40px;text-align:center;">
-    <h1 style="font-size:2rem;">Welcome to<br>ExamReady</h1>
+    <h1 style="font-size:2rem;">Welcome to<br>JAMBReady</h1>
     <p class="home-greeting__sub" style="margin-top:10px;">Prepare smarter for JAMB with targeted practice and AI-powered insights.</p>
   </div>
   <a href="/users/register/" class="er-btn-primary">Create a free account</a>

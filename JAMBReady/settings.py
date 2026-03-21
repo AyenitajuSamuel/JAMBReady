@@ -1,7 +1,3 @@
-"""
-Django settings for ExamReady project.
-"""
-
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,6 +19,7 @@ INSTALLED_APPS = [
     'users',
     'exam',
     'home',
+    'recommendations',
 ]
 
 MIDDLEWARE = [
@@ -35,7 +32,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'ExamReady.urls'
+ROOT_URLCONF = 'JAMBReady.urls'
+WSGI_APPLICATION = 'JAMBReady.wsgi.application'
 
 TEMPLATES = [
     {
@@ -47,12 +45,13 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'recommendations.context_processors.rec_count',
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'ExamReady.wsgi.application'
+WSGI_APPLICATION = 'JAMBReady.wsgi.application'
 
 DATABASES = {
     'default': {
@@ -83,7 +82,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 MEDIA_URL = '/media/'

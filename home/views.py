@@ -17,19 +17,23 @@ def home(request):
         total_exams     = all_sessions.count()
         total_passed    = all_sessions.filter(passed=True).count()
 
-        # Overall readiness = accuracy across all answered questions
         answered  = ExamQuestion.objects.filter(session__user=request.user, answered=True)
         total_q   = answered.count()
         correct_q = answered.filter(is_correct=True).count()
         readiness_pct = round(correct_q / total_q * 100) if total_q else None
+
+        recs      = get_recommendations(request.user)
+        top_recs  = recs[:3]
+        rec_count = len(recs)   # drives the bell badge
 
         context.update({
             "recent_sessions": recent_sessions,
             "total_exams":     total_exams,
             "total_passed":    total_passed,
             "subjects":        Subject.objects.all(),
-            "top_recs":        get_recommendations(request.user)[:3],
+            "top_recs":        top_recs,
             "readiness_pct":   readiness_pct,
+            "rec_count":       rec_count,
         })
 
     return render(request, "home/home.html", context)

@@ -1,13 +1,58 @@
 {% extends "base.html" %}
+{% load static %}
+{% block title %}Log In — JAMBReady{% endblock %}
 
-{% block title %}Login{% endblock %}
+{% block topbar %}
+<header class="er-topbar">
+  <a href="{% url 'home' %}" class="er-topbar__brand">
+    <div class="er-topbar__logo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    </div>
+    JAMBReady
+  </a>
+</header>
+{% endblock %}
+
+{% block tabbar %}{% endblock %}
 
 {% block content %}
-<h2>Log In</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Log In</button>
-</form>
-<p>Don't have an account? <a href="{% url 'register' %}">Register</a></p>
+<div class="auth-shell">
+  <div class="auth-card">
+
+    <div class="auth-card__header">
+      <h1 class="auth-card__title">Welcome back</h1>
+      <p class="auth-card__sub">Log in to continue your JAMB prep.</p>
+    </div>
+
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+
+      {% if form.errors %}
+      <div class="er-message er-message--error" style="margin-bottom:16px;">
+        Invalid username or password. Please try again.
+      </div>
+      {% endif %}
+
+      <div class="auth-field">
+        <label class="auth-field__label" for="id_username">Username</label>
+        <input class="auth-field__input" type="text" name="username" id="id_username"
+               placeholder="Your username" autofocus autocomplete="username">
+      </div>
+
+      <div class="auth-field">
+        <label class="auth-field__label" for="id_password">Password</label>
+        <input class="auth-field__input" type="password" name="password" id="id_password"
+               placeholder="Your password" autocomplete="current-password">
+      </div>
+
+      <button type="submit" class="er-btn-primary" style="margin-top:8px;">Log In</button>
+    </form>
+
+    <p class="auth-card__footer">
+      Don't have an account?
+      <a href="{% url 'register' %}" class="auth-link">Create one →</a>
+    </p>
+
+  </div>
+</div>
 {% endblock %}

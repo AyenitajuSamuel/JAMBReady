@@ -1,9 +1,21 @@
 {% extends "base.html" %}
-{% block title %}No Questions Available{% endblock %}
+{% load static %}
+{% block title %}No Questions — JAMBReady{% endblock %}
+{% block tab_exams %}er-tabbar__item--active{% endblock %}
+{% block sidebar_exams %}er-sidebar__item--active{% endblock %}
 
 {% block content %}
-<h1>No Questions Available</h1>
-<p>There are no questions in the database yet for <strong>{{ exam_type }}</strong>.</p>
-<p>Ask your admin to import questions before starting an exam.</p>
-<a href="{% url 'exam_lobby' %}">Back to Lobby</a>
+<div class="er-page">
+  <div class="history-empty" style="padding-top:60px;">
+    <div class="history-empty__icon" style="background:var(--amber-100);color:var(--amber-500);">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <p class="history-empty__title">No questions available</p>
+    <p class="history-empty__sub">
+      There are no questions in the database yet for <strong>{{ exam_type }}</strong>.<br>
+      Ask your admin to import questions before starting.
+    </p>
+    <a href="{% url 'exam_lobby' %}" class="er-btn-primary" style="margin-top:20px;">Back to Lobby</a>
+  </div>
+</div>
 {% endblock %}
