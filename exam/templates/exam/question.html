@@ -1,25 +1,22 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Question {{ exam_q.order }} of {{ total }} — ExamReady{% endblock %}
+{% block title %}Question {{ exam_q.order }} of {{ total }} — JAMBReady{% endblock %}
 {% block tab_exams %}er-tabbar__item--active{% endblock %}
 
 {% block topbar %}
 <header class="exam-topbar">
   <div class="exam-topbar__row1">
 
-    <!-- Brand -->
     <div class="exam-topbar__brand">
-      <span class="exam-topbar__brand-name">ExamReady</span>
+      <span class="exam-topbar__brand-name">JAMBReady</span>
       <span class="exam-topbar__brand-sub">{{ session.get_exam_type_display }}</span>
     </div>
 
-    <!-- Progress -->
     <div class="exam-topbar__progress-label">
       <div class="exam-topbar__progress-sub">Progress</div>
       <div class="exam-topbar__progress-val">Question {{ exam_q.order }} of {{ total }}</div>
     </div>
 
-    <!-- Timer (timed exam only) / Submit button -->
     {% if session.exam_type == "timed_exam" %}
     <div class="exam-topbar__timer" id="timer-display">
       <div class="exam-topbar__timer-unit">
@@ -40,16 +37,11 @@
     {{ session.started_at|date:"c"|json_script:"started-at" }}
     {{ session.duration_seconds|json_script:"duration-seconds" }}
     {% else %}
-    <form method="post" action="{% url 'submit_answer' session.id %}" id="submit-form" style="display:none;"></form>
-    <button form="main-form" type="submit"
-      style="background:var(--blue-500);color:#fff;border-radius:8px;padding:8px 18px;font-family:var(--font-display);font-weight:600;font-size:.88rem;box-shadow:0 2px 8px rgba(26,95,212,.3);">
-      Submit
-    </button>
+    <div style="width:60px;"></div>
     {% endif %}
 
   </div>
 
-  <!-- Progress bar -->
   <div class="exam-topbar__row2">
     <div class="exam-progress-bar">
       <div class="exam-progress-bar__fill" style="--pct: {{ progress }}%;"></div>
@@ -62,6 +54,15 @@
 
 {% block content %}
 <div class="er-page" style="padding-bottom:90px;">
+
+  <!-- Django messages (e.g. "please select an answer") -->
+  {% if messages %}
+    {% for message in messages %}
+    <div class="er-message er-message--{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}" style="margin-bottom:12px;">
+      {{ message }}
+    </div>
+    {% endfor %}
+  {% endif %}
 
   <!-- Question card -->
   <div class="er-card question-card">
@@ -79,8 +80,10 @@
 
     <div class="choices-list">
       {% for choice in choices %}
-      <label class="choice-item" id="choice-{{ forloop.counter }}">
+      <label class="choice-item {% if exam_q.selected_choice.id == choice.id %}choice-item--selected{% endif %}"
+             id="choice-{{ forloop.counter }}">
         <input type="radio" name="choice_id" value="{{ choice.id }}"
+               {% if exam_q.selected_choice.id == choice.id %}checked{% endif %}
                onchange="selectChoice(this, 'choice-{{ forloop.counter }}')">
         <div class="choice-radio"></div>
         <div class="choice-letter">{% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% else %}E{% endif %}</div>
@@ -92,8 +95,10 @@
 
 </div>
 
-<!-- Bottom action bar -->
+<!-- Bottom action bar: Quit | ← Prev | Next/Submit → -->
 <div class="exam-bottombar">
+
+  <!-- Quit -->
   <form method="post" action="{% url 'abandon_exam' session.id %}"
         onsubmit="return confirm('Abandon this exam?');">
     {% csrf_token %}
@@ -103,20 +108,35 @@
     </button>
   </form>
 
+  <!-- Previous -->
+  {% if has_prev %}
+  <a href="{% url 'exam_question' session.id prev_order %}" class="exam-btn-prev">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Prev
+  </a>
+  {% else %}
+  <span class="exam-btn-prev" style="opacity:.3;cursor:default;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Prev
+  </span>
+  {% endif %}
+
+  <!-- Next / Submit -->
   <button type="submit" form="main-form" class="exam-btn-next">
-    {% if reveal_now %}See Answer{% else %}Next{% endif %}
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    {% if reveal_now %}See Answer
+    {% elif not has_next %}Submit
+    {% else %}Next{% endif %}
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
   </button>
+
 </div>
 
 <script>
-  // Highlight selected choice
   function selectChoice(radio, labelId) {
     document.querySelectorAll('.choice-item').forEach(el => el.classList.remove('choice-item--selected'));
     document.getElementById(labelId).classList.add('choice-item--selected');
   }
 
-  // Countdown timer
   {% if session.exam_type == "timed_exam" %}
   (function() {
     const startedAt  = new Date(JSON.parse(document.getElementById('started-at').textContent));
@@ -133,14 +153,8 @@
       document.getElementById('t-hrs').textContent = pad(hrs);
       document.getElementById('t-min').textContent = pad(mins);
       document.getElementById('t-sec').textContent = pad(secs);
-
-      // Warn when under 5 minutes
-      if (rem < 300000) {
-        document.getElementById('timer-display').style.color = 'var(--red-500)';
-      }
-      if (rem === 0) {
-        document.getElementById('abandon-form').submit();
-      }
+      if (rem < 300000) document.getElementById('timer-display').style.color = 'var(--red-500)';
+      if (rem === 0) document.querySelector('[action*="abandon"]').submit();
     }
     tick();
     setInterval(tick, 1000);

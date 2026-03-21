@@ -1,23 +1,20 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-import json
 import random
 
 from questions.models import Choice, Question, Subject, Topic
 from .models import ExamQuestion, ExamSession
 
 
-# Helpers
+# ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def _build_session(user, exam_type, questions_qs, subject=None, topic=None,
                    duration_seconds=None, pass_mark=50):
-    """Create an ExamSession and its ordered ExamQuestion rows."""
     questions = list(questions_qs)
     random.shuffle(questions)
-
     session = ExamSession.objects.create(
         user=user,
         exam_type=exam_type,
@@ -35,13 +32,11 @@ def _build_session(user, exam_type, questions_qs, subject=None, topic=None,
 
 
 def _reveal_immediately(exam_type):
-    """Return True for exam types that show the answer after each question."""
     return exam_type in (ExamSession.ExamType.PRACTICE_TOPIC,
                          ExamSession.ExamType.WEAKNESS_DRILL)
 
 
 def _get_profile_subjects(user):
-    """Return the queryset of subjects the user has selected, or None if incomplete."""
     try:
         profile = user.profile
     except Exception:
@@ -50,14 +45,12 @@ def _get_profile_subjects(user):
     return subjects if subjects.count() == 4 else None
 
 
-# Lobby 
+# ─── Lobby ────────────────────────────────────────────────────────────────────
+
 @login_required
 def lobby(request):
     profile_subjects = _get_profile_subjects(request.user)
-
-    # Only show the subjects the user has selected (or all if somehow incomplete)
     subjects = profile_subjects if profile_subjects is not None else Subject.objects.none()
-
     subjects_json = [
         {
             "id": s.id,
@@ -73,12 +66,11 @@ def lobby(request):
     })
 
 
-# Start Exam
+# ─── Start Exam ───────────────────────────────────────────────────────────────
 
 @login_required
 @require_POST
 def start_exam(request):
-    # Guard: user must have selected exactly 4 subjects
     profile_subjects = _get_profile_subjects(request.user)
     if profile_subjects is None:
         return redirect("select_subjects")
@@ -87,14 +79,9 @@ def start_exam(request):
     subject_id = request.POST.get("subject_id")
     topic_id   = request.POST.get("topic_id")
 
-    # Resolve subject — must be one the user has actually selected
-    subject = (
-        profile_subjects.filter(pk=subject_id).first()
-        if subject_id else None
-    )
-    topic = Topic.objects.filter(pk=topic_id).first() if topic_id else None
+    subject = profile_subjects.filter(pk=subject_id).first() if subject_id else None
+    topic   = Topic.objects.filter(pk=topic_id).first() if topic_id else None
 
-    # Base queryset is always scoped to the user's 4 subjects
     base_qs = (
         Question.objects
         .filter(subject__in=profile_subjects)
@@ -135,7 +122,6 @@ def start_exam(request):
             .filter(
                 session__user=request.user,
                 is_correct=False,
-                # Only drill questions within the user's chosen subjects
                 question__subject__in=profile_subjects,
             )
             .values_list("question_id", flat=True)
@@ -149,36 +135,64 @@ def start_exam(request):
     else:
         return redirect("exam_lobby")
 
-    return redirect("exam_question", session_id=session.id)
+    return redirect("exam_question", session_id=session.id, order=1)
 
 
-#Question View
+# ─── Question View ────────────────────────────────────────────────────────────
 
 @login_required
-def exam_question(request, session_id):
+def exam_question(request, session_id, order=None):
     session = get_object_or_404(
         ExamSession, pk=session_id, user=request.user,
         status=ExamSession.Status.IN_PROGRESS
     )
 
-    exam_q = session.examquestion_set.filter(answered=False).first()
-    if not exam_q:
-        return redirect("exam_complete", session_id=session.id)
+    all_questions = session.examquestion_set.select_related(
+        "question", "selected_choice"
+    ).order_by("order")
 
-    total     = session.examquestion_set.count()
-    answered  = session.examquestion_set.filter(answered=True).count()
-    progress  = round((answered / total) * 100) if total else 0
+    total = all_questions.count()
+
+    # If no order given, go to first unanswered; if all answered go to complete
+    if order is None:
+        exam_q = all_questions.filter(answered=False).first()
+        if not exam_q:
+            return redirect("exam_complete", session_id=session.id)
+        order = exam_q.order
+    else:
+        exam_q = get_object_or_404(ExamQuestion, session=session, order=order)
+
+    answered_count = all_questions.filter(answered=True).count()
+    progress = round((answered_count / total) * 100) if total else 0
+
+    # Build list of question statuses for navigation dots
+    nav_questions = [
+        {
+            "order":    q.order,
+            "answered": q.answered,
+            "current":  q.order == order,
+        }
+        for q in all_questions
+    ]
 
     return render(request, "exam/question.html", {
-        "session":    session,
-        "exam_q":     exam_q,
-        "question":   exam_q.question,
-        "choices":    exam_q.question.choices.all(),
-        "answered":   answered,
-        "total":      total,
-        "progress":   progress,
-        "reveal_now": _reveal_immediately(session.exam_type),
+        "session":       session,
+        "exam_q":        exam_q,
+        "question":      exam_q.question,
+        "choices":       exam_q.question.choices.all(),
+        "answered":      answered_count,
+        "total":         total,
+        "progress":      progress,
+        "reveal_now":    _reveal_immediately(session.exam_type),
+        "nav_questions": nav_questions,
+        "has_prev":      order > 1,
+        "has_next":      order < total,
+        "prev_order":    order - 1,
+        "next_order":    order + 1,
     })
+
+
+# ─── Submit Answer ────────────────────────────────────────────────────────────
 
 @login_required
 @require_POST
@@ -188,15 +202,21 @@ def submit_answer(request, session_id):
         status=ExamSession.Status.IN_PROGRESS
     )
 
-    exam_q_id  = request.POST.get("exam_question_id")
-    choice_id  = request.POST.get("choice_id")
-    exam_q     = get_object_or_404(ExamQuestion, pk=exam_q_id, session=session)
-    choice     = get_object_or_404(Choice, pk=choice_id, question=exam_q.question)
+    exam_q_id = request.POST.get("exam_question_id")
+    choice_id = request.POST.get("choice_id")
+    exam_q    = get_object_or_404(ExamQuestion, pk=exam_q_id, session=session)
+
+    # ── Bug fix: no answer selected ──────────────────────────────────────────
+    if not choice_id:
+        messages.warning(request, "Please select an answer before continuing.")
+        return redirect("exam_question", session_id=session.id, order=exam_q.order)
+
+    choice = get_object_or_404(Choice, pk=choice_id, question=exam_q.question)
 
     exam_q.selected_choice = choice
-    exam_q.is_correct       = choice.is_correct
-    exam_q.answered         = True
-    exam_q.answered_at      = timezone.now()
+    exam_q.is_correct      = choice.is_correct
+    exam_q.answered        = True
+    exam_q.answered_at     = timezone.now()
     exam_q.save()
 
     if _reveal_immediately(session.exam_type):
@@ -215,10 +235,14 @@ def submit_answer(request, session_id):
             "explanation":    explanation,
         })
 
-    return redirect("exam_question", session_id=session.id)
+    # Go to next unanswered question
+    next_unanswered = session.examquestion_set.filter(answered=False).first()
+    if not next_unanswered:
+        return redirect("exam_complete", session_id=session.id)
+    return redirect("exam_question", session_id=session.id, order=next_unanswered.order)
 
 
-
+# ─── Abandon ──────────────────────────────────────────────────────────────────
 
 @login_required
 @require_POST
@@ -228,6 +252,9 @@ def abandon_exam(request, session_id):
     session.completed_at = timezone.now()
     session.save()
     return redirect("exam_lobby")
+
+
+# ─── Complete ─────────────────────────────────────────────────────────────────
 
 @login_required
 def exam_complete(request, session_id):
@@ -250,7 +277,7 @@ def exam_complete(request, session_id):
     })
 
 
-#History
+# ─── History ──────────────────────────────────────────────────────────────────
 
 @login_required
 def exam_history(request):
