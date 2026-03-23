@@ -13,8 +13,8 @@ It goes beyond simple practice by providing:
 The goal is simple: help students study smarter and improve their chances of success.
 
 ## Tech Stack
-Backend: Django
-Frontend: Django Templates (HTML, CSS)
-Database: SQLite
-Language: Python
+-Backend: Django
+-Frontend: Django Templates (HTML, CSS)
+-Database: SQLite
+-Language: Python
 
